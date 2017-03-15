@@ -127,7 +127,7 @@ var_x, var_y, lengths, xtest, ytest, test_lens = make_diff_data(15, 1000, 1, 3)
 ## manually run model a few iterations
 
 
-bsiz = 50 # mini-batches of 50 sequences at a time
+bsiz = 2 # mini-batches of 50 sequences at a time
 nb = var_x.data.size()[1]/bsiz  # how many mini-batches per epoch
 
 for epoch in tqdm(range(100)):

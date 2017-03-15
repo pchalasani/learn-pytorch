@@ -30,9 +30,9 @@ def split_train_test(x,y, test = 0.3):
     test_lengths = -np.sort(-np.random.random_integers(nt / 2, nt, nb_test))
 
     x_train = x[:, :nb_train, :]
-    x_test = x[:, :nb_test, :]
+    x_test = x[:, nb_train:, :]
     y_train = y[:, :nb_train, :]
-    y_test = y[:, :nb_test, :]
+    y_test = y[:, nb_train:, :]
 
     return x_train, y_train, train_lengths, x_test, y_test, test_lengths
 

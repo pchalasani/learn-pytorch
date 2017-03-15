@@ -1,38 +1,4 @@
-import math
-import random
-import unittest
-import itertools
-import contextlib
-from copy import deepcopy
-from itertools import repeat, product
-from functools import wraps, reduce
-from operator import mul
-import torch.optim as optim
-import numpy as np
-from tqdm import tqdm
-import torch as t
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.nn.parallel as dp
-import torch.nn.init as init
-import torch.nn.utils as nn_utils
-import torch.nn.utils.rnn as rnn_utils
-from torch.nn.utils import clip_grad_norm
-from torch.autograd import Variable, gradcheck
-from torch.nn import Parameter
-import numpy as np
-# import tensorflow as tf
-# %matplotlib inline
-import matplotlib.pyplot as plt
 from rnn import *
-
-num_steps = 5 # number of truncated backprop steps ('n' in the discussion above)
-batch_size = 200
-num_classes = 2
-state_size = 4
-learning_rate = 0.1
-
-
 
 # best settings:
 #model = RNN(rnn_type ='GRU', nh=20, nlay=2, dropout = 0.5)
@@ -44,11 +10,11 @@ optimizer = optim.Adam(model.parameters(), lr = 5e-4)
 #optimizer = optim.RMSprop(model.parameters(), lr = 0.001)
 model.zero_grad()
 
-var_x, var_y, lengths, xtest, ytest, test_lens = make_r2rt_data(20, 1000, 1)
+var_x, var_y, lengths, xtest, ytest, test_lens = make_r2rt_data(500, 10, 1)
 ## manually run model a few iterations
 
 
-bsiz = 20 # mini-batches of 50 sequences at a time
+bsiz = 2 # mini-batches of 50 sequences at a time
 nb = var_x.data.size()[1]/bsiz  # how many mini-batches per epoch
 
 for epoch in tqdm(range(100)):
