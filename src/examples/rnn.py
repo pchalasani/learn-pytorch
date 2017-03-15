@@ -88,7 +88,7 @@ def make_diff_data(NT, NB, NF=1, delay=0, test = 0.3, gpu = False):
 
     return split_train_test(var_x, var_y, test)
 
-def make_r2rt_data(nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False, hot = False):
+def make_r2rt_data(nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False, xhot = False, yhot = False):
     size = nt * nb * nf
     X = np.array(np.random.choice(2, size=(size,)))
     Y = []
@@ -105,8 +105,9 @@ def make_r2rt_data(nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False, hot = Fals
 
     tx = t.Tensor(X).view(nb,nt,nf).transpose(0,1)
     ty = t.Tensor(Y).view(nb,nt,nf).transpose(0,1)
-    if hot:
+    if xhot:
         tx = one_hot(tx)
+    if yhot:
         ty = one_hot(ty)
 
     if gpu:
@@ -134,9 +135,9 @@ class RNN(nn.Module):
         self.rnn_type = rnn_type  # 'LSTM' or 'GRU'
         self.drop = nn.Dropout(dropout)
         self.rnn = getattr(nn, rnn_type)(nf, nh, nlay, dropout=dropout)
-        # NOTE: we're assuming num output-features is same as num input-features
-        self.fc =  nn.Linear(nh, nf)
-        self.sig = nn.Softmax()
+        # NOTE: we're assuming num output-features is 1 regardless of num input-features
+        self.fc =  nn.Linear(nh, 1)
+        self.sig = nn.Sigmoid()
 
     def init_hidden(self, bsz):
         weight = next(self.parameters()).data
