@@ -2,7 +2,7 @@ from rnn import *
 
 # best settings:
 #model = RNN(rnn_type ='GRU', nh=20, nlay=2, dropout = 0.5)
-model = RNN(rnn_type ='GRU', nh=50, nlay=32, dropout = 0.7)
+model = RNN(rnn_type ='GRU', nf=2, nh=16, nlay=2, dropout = 0.5)
 #loss_fn = nn.MSELoss(size_average=True)
 loss_fn = nn.BCELoss(size_average=True)
 optimizer = optim.Adam(model.parameters(), lr = 5e-4)
@@ -10,11 +10,11 @@ optimizer = optim.Adam(model.parameters(), lr = 5e-4)
 #optimizer = optim.RMSprop(model.parameters(), lr = 0.001)
 model.zero_grad()
 
-var_x, var_y, lengths, xtest, ytest, test_lens = make_r2rt_data(500, 10, 1)
+var_x, var_y, lengths, xtest, ytest, test_lens = make_r2rt_data(25, 1000, 1, hot = True)
 ## manually run model a few iterations
 
 
-bsiz = 2 # mini-batches of 50 sequences at a time
+bsiz = 50 # mini-batches of 50 sequences at a time
 nb = var_x.data.size()[1]/bsiz  # how many mini-batches per epoch
 
 for epoch in tqdm(range(100)):

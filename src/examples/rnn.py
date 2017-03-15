@@ -20,7 +20,11 @@ import torch.nn.utils.rnn as rnn_utils
 from torch.nn.utils import clip_grad_norm
 from torch.autograd import Variable, gradcheck
 from torch.nn import Parameter
+from sklearn.preprocessing import OneHotEncoder
 
+enc = OneHotEncoder()
+enc.fit(np.array([0,3,9]).reshape(-1,1))
+enc.transform(np.array([0,3,9,0,9,3,0,0]).reshape(-1,1)).toarray()
 
 def split_train_test(x,y, test = 0.3):
     nt, nb, nf = x.size()
@@ -35,6 +39,22 @@ def split_train_test(x,y, test = 0.3):
     y_test = y[:, nb_train:, :]
 
     return x_train, y_train, train_lengths, x_test, y_test, test_lengths
+
+
+def one_hot(x):
+    """
+    convert a tensor x (nt, nb, 1) => one-hot encode the third dimension, i.e.
+    to a tensor (nt, nb, nf) where nf = num unique values of tensor elements
+    """
+    enc = OneHotEncoder()
+    vals = x.contiguous().view(-1,1).numpy()
+    enc.fit(vals)
+    return t.Tensor(enc.transform(vals).toarray()).view(x.size()[0],x.size()[1],-1)
+
+
+
+
+
 
 '''
 NT max-time-steps in a sequence
@@ -68,8 +88,8 @@ def make_diff_data(NT, NB, NF=1, delay=0, test = 0.3, gpu = False):
 
     return split_train_test(var_x, var_y, test)
 
-def make_r2rt_data(nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False):
-    size = nt * nb
+def make_r2rt_data(nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False, hot = False):
+    size = nt * nb * nf
     X = np.array(np.random.choice(2, size=(size,)))
     Y = []
     for i in range(size):
@@ -83,12 +103,18 @@ def make_r2rt_data(nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False):
         else:
             Y.append(1)
 
-    if (gpu):
-        x = Variable(t.Tensor(X).view(nb,nt,nf).transpose(0,1).cuda())
-        y = Variable(t.Tensor(Y).view(nb,nt,nf).transpose(0,1).cuda())
+    tx = t.Tensor(X).view(nb,nt,nf).transpose(0,1)
+    ty = t.Tensor(Y).view(nb,nt,nf).transpose(0,1)
+    if hot:
+        tx = one_hot(tx)
+        ty = one_hot(ty)
+
+    if gpu:
+        x = Variable(tx.cuda())
+        y = Variable(ty.cuda())
     else:
-        x = Variable(t.Tensor(X).view(nb,nt,nf).transpose(0,1))
-        y = Variable(t.Tensor(Y).view(nb,nt,nf).transpose(0,1))
+        x = Variable(tx)
+        y = Variable(ty)
 
     return split_train_test(x,y,test)
 
@@ -108,8 +134,9 @@ class RNN(nn.Module):
         self.rnn_type = rnn_type  # 'LSTM' or 'GRU'
         self.drop = nn.Dropout(dropout)
         self.rnn = getattr(nn, rnn_type)(nf, nh, nlay, dropout=dropout)
-        self.fc =  nn.Linear(nh, 1)
-        self.sig = nn.Sigmoid()
+        # NOTE: we're assuming num output-features is same as num input-features
+        self.fc =  nn.Linear(nh, nf)
+        self.sig = nn.Softmax()
 
     def init_hidden(self, bsz):
         weight = next(self.parameters()).data
