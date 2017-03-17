@@ -51,7 +51,38 @@ def one_hot(x):
     enc.fit(vals)
     return t.Tensor(enc.transform(vals).toarray()).view(x.size()[0],x.size()[1],-1)
 
+def crap(x):
+    return x[0]
 
+def generic(fn, x):
+    return fn(x)
+
+# generate batches of sequential binary data
+# defined by an arbitrary rule
+def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False, xhot = False, yhot = False):
+    size = nt * nb * nf
+    X = np.array(np.random.choice(2, size=(size,)))
+    Y = np.random.choice(2, size = delay)
+    for i in range(delay, size):
+        Y = np.append(Y, genfn(X[i-delay:i]))
+    tx = t.Tensor(X).view(nb,nt,nf).transpose(0,1)
+    ty = t.Tensor(Y).view(nb,nt,nf).transpose(0,1)
+    # fill in initial "delay" elements of each seq with rand values
+    ty[:delay, :, :] = t.Tensor(np.array(np.random.choice(2, size=delay*nb*nf))).view(delay, nb, nf)
+    if xhot:
+        tx = one_hot(tx)
+    if yhot:
+        ty = one_hot(ty)
+
+
+    if gpu:
+        x = Variable(tx.cuda())
+        y = Variable(ty.cuda())
+    else:
+        x = Variable(tx)
+        y = Variable(ty)
+
+    return split_train_test(x,y,test)
 
 
 
