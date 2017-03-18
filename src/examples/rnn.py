@@ -59,16 +59,22 @@ def generic(fn, x):
 
 # generate batches of sequential binary data
 # defined by an arbitrary rule
-def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, gpu = False, xhot = False, yhot = False):
+def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'rand', rand= True, gpu = False, xhot = False, yhot = False):
     size = nt * nb * nf
-    X = np.array(np.random.choice(2, size=(size,)))
+    if rand:
+        X = np.array(np.random.choice(2, size=(size,)))
+    else:
+        X = np.array(range(size))
     Y = np.random.choice(2, size = delay)
     for i in range(delay, size):
         Y = np.append(Y, genfn(X[i-delay:i]))
     tx = t.Tensor(X).view(nb,nt,nf).transpose(0,1)
     ty = t.Tensor(Y).view(nb,nt,nf).transpose(0,1)
     # fill in initial "delay" elements of each seq with rand values
-    ty[:delay, :, :] = t.Tensor(np.array(np.random.choice(2, size=delay*nb*nf))).view(delay, nb, nf)
+    if fill == 'rand':
+        ty[:delay, :, :] = t.Tensor(np.array(np.random.choice(2, size=delay*nb*nf))).view(delay, nb, nf)
+    else:
+        ty[:delay, :, :] = 0.0
     if xhot:
         tx = one_hot(tx)
     if yhot:
