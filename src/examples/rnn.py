@@ -38,7 +38,7 @@ def split_train_test(x,y, test = 0.3):
     y_train = y[:, :nb_train, :]
     y_test = y[:, nb_train:, :]
 
-    return x_train, y_train, train_lengths, x_test, y_test, test_lengths
+    return Variable(x_train), Variable(y_train), train_lengths, Variable(x_test), Variable(y_test), test_lengths
 
 
 def one_hot(x):
@@ -82,11 +82,11 @@ def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'ra
 
 
     if gpu:
-        x = Variable(tx.cuda())
-        y = Variable(ty.cuda())
+        x = tx.cuda()
+        y = ty.cuda()
     else:
-        x = Variable(tx)
-        y = Variable(ty)
+        x = tx
+        y = ty
 
     return split_train_test(x,y,test)
 
