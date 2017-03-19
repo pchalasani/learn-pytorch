@@ -62,12 +62,17 @@ def generic(fn, x):
 def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'rand', minlen = 2, rand= True, gpu = False, xhot = False, yhot = False):
     size = nt * nb * nf
     if rand:
-        X = np.array(np.random.choice(2, size=(size,)))
-    else:
-        X = np.array(range(size))
-    Y = np.random.choice(2, size = delay)
-    for i in range(delay, size):
+        # add extra elems at start so we get all legit values for Y
+        # This could be important as it affects the distribution of Y
+        X = np.array(np.random.choice(2, size=(size+delay,)))
+    else: # just for testing
+        X = np.array(range(size+delay))
+    Y = []
+    for i in range(delay, size + delay):
         Y = np.append(Y, genfn(X[i-delay:i]))
+
+    # restore X to needed size
+    X = X[delay:]
     tx = t.Tensor(X).view(nb,nt,nf).transpose(0,1)
     ty = t.Tensor(Y).view(nb,nt,nf).transpose(0,1)
     # fill in initial "delay" elements of each seq with rand values
