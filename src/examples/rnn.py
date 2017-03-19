@@ -26,12 +26,12 @@ enc = OneHotEncoder()
 enc.fit(np.array([0,3,9]).reshape(-1,1))
 enc.transform(np.array([0,3,9,0,9,3,0,0]).reshape(-1,1)).toarray()
 
-def split_train_test(x,y, test = 0.3):
+def split_train_test(x,y, test = 0.3, minlen = x.size(0)/2):
     nt, nb, nf = x.size()
     nb_test = int(test * nb)
     nb_train = nb - nb_test
-    train_lengths = -np.sort(-np.random.random_integers(nt / 2, nt, nb_train))
-    test_lengths = -np.sort(-np.random.random_integers(nt / 2, nt, nb_test))
+    train_lengths = -np.sort(-np.random.random_integers(minlen, nt, nb_train))
+    test_lengths = -np.sort(-np.random.random_integers(minlen, nt, nb_test))
 
     x_train = x[:, :nb_train, :]
     x_test = x[:, nb_train:, :]
@@ -59,7 +59,7 @@ def generic(fn, x):
 
 # generate batches of sequential binary data
 # defined by an arbitrary rule
-def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'rand', rand= True, gpu = False, xhot = False, yhot = False):
+def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'rand', minlen = nt/2, rand= True, gpu = False, xhot = False, yhot = False):
     size = nt * nb * nf
     if rand:
         X = np.array(np.random.choice(2, size=(size,)))
@@ -88,7 +88,7 @@ def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'ra
         x = tx
         y = ty
 
-    return split_train_test(x,y,test)
+    return split_train_test(x,y,test,minlen)
 
 
 
