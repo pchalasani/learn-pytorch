@@ -38,7 +38,7 @@ def split_train_test(x,y, test = 0.3, minlen = 2):
     y_train = y[:, :nb_train, :]
     y_test = y[:, nb_train:, :]
 
-    return Variable(x_train), Variable(y_train), train_lengths, Variable(x_test), Variable(y_test), test_lengths
+    return x_train, y_train, train_lengths, x_test, y_test, test_lengths
 
 
 def one_hot(x):
