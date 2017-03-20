@@ -51,28 +51,90 @@ def one_hot(x):
     enc.fit(vals)
     return t.Tensor(enc.transform(vals).toarray()).view(x.size()[0],x.size()[1],-1)
 
-def crap(x):
-    return x[0]
+def genx(size):
+    k = 6 # should be > 2
+    x = np.random.choice(2, k)
+    for i in range(size-k):
+        n1 = sum(x[i-k : i-2])
+        if n1 > k/2:
+            thresh = 0.1
+        else:
+            thresh = 0.9
+        x = np.append(x, 1 * np.random.rand() < thresh)
+    return x
 
-def generic(fn, x):
-    return fn(x)
+
+def geny(x, i):
+    '''
+    y[i] as a function of the entire x, which is typically a window of x values
+    :param x:
+    :param i:
+    :return:
+    '''
+    return 1 * (sum(x[i:]) > 0)
+
+
+
+def make_xy_seq_data(genx, geny, xstart, xend=0, nt = 15, nb = 50, nf = 1, test = 0.3, fill = 'rand', minlen = 0.5, gpu = False, xhot = False, yhot = False):
+    '''
+    :param genx: x seq generator
+    :param geny: y seq generator
+    :param xstart:  y[i] is a function of x[i-xstart : i+xend]
+    :param xend:
+    :param nt: (max) num time steps
+    :param nb: num batches
+    :param nf: num features
+    :param test:
+    :param fill:
+    :param minlen:
+    :param gpu:
+    :param xhot:
+    :param yhot:
+    :return:
+    '''
+    size = nt * nb * nf
+    X = genx(size)
+    Y = []
+    for i in range(size): # don't care about indexes here
+        Y = np.append(Y, geny(X[i-xstart : i + xend], xstart))
+
+    tx = t.Tensor(X).view(nb,nt,nf).transpose(0,1)
+    ty = t.Tensor(Y).view(nb,nt,nf).transpose(0,1)
+    # fill in initial "xstart" elements of each seq with rand values
+    if fill == 'zero':
+        ty[:xstart, :, :] = 0.0
+    if xhot:
+        tx = one_hot(tx)
+    if yhot:
+        ty = one_hot(ty)
+
+
+    if gpu:
+        x = tx.cuda()
+        y = ty.cuda()
+    else:
+        x = tx
+        y = ty
+
+    lengths = -np.sort(-np.random.random_integers( int(nt * minlen), nt, nb))
+    return x, y, lengths
+
+#x, y, lens = make_xy_seq_data(genx, geny, 6, 3, nt = 15, nb = 5)
 
 # generate batches of sequential binary data
 # defined by an arbitrary rule
-def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'rand', minlen = 2, rand= True, gpu = False, xhot = False, yhot = False):
+def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, fill = 'rand', minlen = 0.5, rand= True, gpu = False, xhot = False, yhot = False):
     size = nt * nb * nf
     if rand:
         # add extra elems at start so we get all legit values for Y
         # This could be important as it affects the distribution of Y
-        X = np.array(np.random.choice(2, size=(size+delay,)))
+        X = np.array(np.random.choice(2, size=(size,)))
     else: # just for testing
-        X = np.array(range(size+delay))
+        X = np.array(range(size))
     Y = []
-    for i in range(delay, size + delay):
+    for i in range(size):
         Y = np.append(Y, genfn(X[i-delay:i]))
 
-    # restore X to needed size
-    X = X[delay:]
     tx = t.Tensor(X).view(nb,nt,nf).transpose(0,1)
     ty = t.Tensor(Y).view(nb,nt,nf).transpose(0,1)
     # fill in initial "delay" elements of each seq with rand values
@@ -90,8 +152,8 @@ def make_seq_data(genfn, delay, nt = 10, nb = 50, nf = 1, test = 0.3, fill = 'ra
     else:
         x = tx
         y = ty
-
-    return split_train_test(x,y,test,minlen)
+    lengths = -np.sort(-np.random.random_integers( int(nt * minlen), nt, nb))
+    return x, y, lengths
 
 
 
