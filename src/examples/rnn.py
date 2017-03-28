@@ -77,7 +77,7 @@ ProbVec = (0.5, 0.5, 0.0)
 The task is to predict whether there will be a Purchase event (2) over the next `f` time-steps. The "Teaching sequence" `Y` will provide this for training.
 '''
 # size, lookback, winsize, cart-count
-def gen_shopper(size, L=6, w=4, c=2):
+def gen_shopper_x(size, L=6, w=4, c=2):
     x = np.random.binomial(1, 0.5, L)
     for i in range(size-L):
         recent = x[-L :]
@@ -95,6 +95,8 @@ def gen_shopper(size, L=6, w=4, c=2):
         x = np.append(x, new_x)
     return x
 
+def gen_shopper_y(x, i):
+    return 1*(sum(1*(x[i:] == 2)) > 0)
 
 def genx(size):
     k = 6 # should be > 2
