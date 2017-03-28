@@ -51,6 +51,12 @@ def one_hot(x):
     enc.fit(vals)
     return t.Tensor(enc.transform(vals).toarray()).view(x.size()[0],x.size()[1],-1)
 
+# create nWindows x windowSize array
+def roll_windows(seq, window=5):
+    stride = seq.strides[0]
+    sequence_strides = as_strided(seq, shape=[len(seq) - window + 1, window], strides=[stride, stride])
+    return sequence_strides
+
 def genx(size):
     k = 6 # should be > 2
     x = np.random.choice(2, k)
