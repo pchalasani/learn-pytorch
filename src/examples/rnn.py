@@ -97,7 +97,7 @@ def gen_shopper_x(size, L=6, w=4, c=2):
     return x
 
 def gen_shopper_y(x, i):
-    return 1*(sum(1*(x[i:] == 2)) > 0)
+    return 1*(sum(1*(x[i+1:] == 2)) > 0)
 
 def genx(size):
     k = 6 # should be > 2
