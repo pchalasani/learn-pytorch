@@ -21,6 +21,7 @@ from torch.nn.utils import clip_grad_norm
 from torch.autograd import Variable, gradcheck
 from torch.nn import Parameter
 from sklearn.preprocessing import OneHotEncoder
+from numpy.lib.stride_tricks import as_strided
 
 enc = OneHotEncoder()
 enc.fit(np.array([0,3,9]).reshape(-1,1))
