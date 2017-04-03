@@ -149,7 +149,7 @@ class shopgen:
 
     def gen_tensors(self, nt=15, nb=50, nf=1, fill='rand', minlen=0.5, gpu=False, xhot=False, yhot=False):
         size = nt * nb
-        X, Y, _, loss, emp = self.gen_xy(size)
+        X, Y, py, loss, emp = self.gen_xy(size)
         tx = t.Tensor(X).view(nb, nt, nf).transpose(0, 1)
         ty = t.Tensor(Y).view(nb, nt, nf).transpose(0, 1)
         # fill in initial "xstart" elements of each seq with rand values
@@ -168,7 +168,7 @@ class shopgen:
             y = ty
 
         lengths = -np.sort(-np.random.random_integers(int(nt * minlen), nt, nb))
-        return Bunch(x=x, y=y, lengths=lengths, loss=loss, emp=emp)
+        return Bunch(xvec = X, yvec = Y, py = py, x=x, y=y, lengths=lengths, loss=loss, emp=emp)
 
 
 # test
