@@ -32,8 +32,10 @@ class shopgen:
     '''
     infwin = influence window: if trigger happens at window ending at index i,
              how many steps AFTER i does the influence persist?
+    snoop: indicates whether the teaching signal y should snoop into the future
+           to indicate whether there WILL be a buy or not
     '''
-    def __init__(self, carts, win, infwin, future, buy=2, prob=0.7):
+    def __init__(self, carts, win, infwin, future, buy=2, prob=0.7, snoop = True ):
         self.lookback = win + infwin - 1 # for given index i, oldest index that can influce i is i-lookback
         self.win = win
         self.infwin = infwin
@@ -41,6 +43,7 @@ class shopgen:
         self.carts = carts
         self.buy = 2
         self.p = prob
+        self.snoop = snoop
 
     # create nWindows x windowSize array
     def roll_windows(self, seq, window=5):
@@ -120,15 +123,15 @@ class shopgen:
     '''
     def gen_shopper_y_py(self, x, i):
         trig, last = self.shop_trigger(x[max(0, i+1-self.lookback) : i+1])
+        will_buy =  1 * (sum(1 * (x[i+1 : ] == self.buy)) > 0)
         if trig:
             infwin_fwin_overlap = min(self.future, last + self.win + self.infwin - i - 1)
             if infwin_fwin_overlap <= 0:
-                return 0, 0.0
+                return self.snoop * will_buy, 0.0
             else:
-                will_buy =  1 * (sum(1 * (x[i+1 : ] == self.buy)) > 0)
                 return will_buy, 1 - np.power(1 - self.p, infwin_fwin_overlap)
         else:
-            return 0, 0.0
+            return self.snoop * will_buy, 0.0
 
 
     def gen_xy(self, size):
@@ -173,7 +176,12 @@ class shopgen:
 
 # test
 g = shopgen(2,4,3,3)
-x, y, py, loss, emp = g.gen_xy(500)
+x, y, py, loss, emp = g.gen_xy(20)
 np.transpose(np.stack([x,y,py]))
 
 b = g.gen_tensors(nt=200, nb=50, minlen = 1)
+
+
+g = shopgen(carts=3, win=6, infwin=3, future=3)
+x, y, py, loss, emp =  g.gen_xy(40)
+np.transpose(np.stack([x,y,py]))
