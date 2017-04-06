@@ -48,9 +48,14 @@ def one_hot(x):
     to a tensor (nt, nb, nf) where nf = num unique values of tensor elements
     """
     enc = OneHotEncoder()
-    vals = x.contiguous().view(-1,1).numpy()
-    enc.fit(vals)
-    return t.Tensor(enc.transform(vals).toarray()).view(x.size()[0],x.size()[1],-1)
+    if type(x) == t.Tensor:
+        vals = x.contiguous().view(-1,1).numpy()
+        enc.fit(vals)
+        return t.Tensor(enc.transform(vals).toarray()).view(x.size()[0],x.size()[1],-1)
+    else:
+        vals = np.transpose(np.array([x]))
+        enc.fit(vals)
+        return enc.transform(vals).toarray()
 
 def genx(size):
     k = 6 # should be > 2
