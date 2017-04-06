@@ -171,7 +171,7 @@ class shopgen_irreg:
             newy = self.gen_shopper_y(x[start_idx : i + self.future + 1], i - start_idx)
             y = np.append(y, newy)
         emp_py = np.sum(y)/size
-        emploss = - emp_py * np.log(emp_py) - (1 - emp_py)*np.log(1 - emp_py)
+        emploss = - emp_py * np.log(max(1e-5,emp_py)) - (1 - emp_py)*np.log(max(1e-5, 1 - emp_py))
         return x, y, emploss
 
     def gen_tensors(self, nt=15, nb=50, nf=1, fill='rand', minlen=0.5, gpu=False, xhot=False, yhot=False):
@@ -180,7 +180,7 @@ class shopgen_irreg:
         x_events, x_lags  = zip(*X)
         tx_events = t.Tensor(x_events).view(nb, nt, nf).transpose(0, 1)
         tx_lags = t.Tensor(x_lags).view(nb, nt, 1).transpose(0, 1)
-        ty = t.Tensor(y).view(nb, nt, nf).transpose(0, 1)
+        ty = t.Tensor(Y).view(nb, nt, nf).transpose(0, 1)
 
         # fill in initial "xstart" elements of each seq with rand values
         if fill == 'zero':
@@ -217,4 +217,7 @@ g.gen_shopper_y(evs,3)
 
 # g = shopgen(carts=3, win=6, infwin=3, future=3)
 x, y, emp =  g.gen_xy(40)
-np.transpose(np.stack([x,y]))
+#np.transpose(np.stack([x,y]))
+
+b = g.gen_tensors(15,5, xhot = True)
+
